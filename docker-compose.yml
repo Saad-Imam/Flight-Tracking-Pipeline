@@ -1,4 +1,4 @@
-#NOTE: we use confluentinc images for Kafka and Zookeeper, since they are industry standard and well maintained.
+version: '3.8'
 
 services:
   
@@ -14,21 +14,17 @@ services:
     networks:
       - bigdata-network
 
-  # 2. Kafka (The Message Broker)
-
+  # 2. Kafka 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
     depends_on:
       - zookeeper
     ports:
-      - "9094:9094" # Exposed to host for debugging if needed
+      - "9094:9094"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # Listeners: Defines how clients communicate with Kafka
-      # INTERNAL: Used by Producer/Spark inside Docker
-      # EXTERNAL: Used by you (localhost) if you run scripts outside Docker
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -36,8 +32,7 @@ services:
     networks:
       - bigdata-network
 
-  # 3. Kafka UI (Visual Dashboard)
-  # Access at http://localhost:8090 
+  # 3. Kafka UI 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
@@ -52,32 +47,116 @@ services:
     networks:
       - bigdata-network
 
-  
   # 4. Flight Producer 
   flight-producer:
     build: ./producer
     container_name: flight-producer
     depends_on:
       - kafka
-    restart: always # If it crashes it restarts
+    restart: always
     networks:
       - bigdata-network
 
-  # 5. MongoDB (Hot Storage)
-
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
+  # 5. Spark Master (Official Apache Image)
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    hostname: spark-master
+    # The official image runs as a 'CMD' by default, we override it to start the Master class
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      - SPARK_NO_DAEMONIZE=true
     ports:
-      - "27017:27017"
+      - "8081:8080" # Spark Master Web UI 
+      - "7077:7077" # Spark Master Protocol Port
+    networks:
+      - bigdata-network
+  
+  # 6. Spark Worker (Official Apache Image)
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    # We explicitly tell the worker where the master is via command arguments
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+    networks:
+      - bigdata-network
+  
+  # 7. Airflow Init
+  airflow-init:
+    build: ./airflow
+    container_name: airflow-init
+    command: version
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    entrypoint: >
+      bash -c "airflow db init &&
+      airflow users create --username admin --password admin --firstname Peter --lastname Parker --role Admin --email spiderman@superhero.org &&
+      airflow db upgrade"
+    depends_on:
+      - postgres
+    networks:
+      - bigdata-network
+
+  # 8. Airflow Webserver
+  airflow-webserver:
+    build: ./airflow
+    container_name: airflow-webserver
+    restart: always
+    depends_on:
+      - postgres
+      - airflow-init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:airflow@postgres/airflow"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__WEBSERVER__SECRET_KEY: "saadan_saad"
+      AIRFLOW_CONN_SPARK_DEFAULT: '{"conn_type": "spark", "host": "spark://spark-master", "port": 7077}'
     volumes:
-      - mongo_data:/data/db
+      - ./dags:/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    networks:
+      - bigdata-network
+    command: webserver
+
+  # 9. Airflow Scheduler
+  airflow-scheduler:
+    build: ./airflow
+    container_name: airflow-scheduler
+    restart: always
+    depends_on:
+      - postgres
+      - airflow-init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:airflow@postgres/airflow"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__WEBSERVER__SECRET_KEY: "saadan_saad"
+      AIRFLOW_CONN_SPARK_DEFAULT: '{"conn_type": "spark", "host": "spark://spark-master", "port": 7077}'
+    volumes:
+      - ./dags:/opt/airflow/dags
+    networks:
+      - bigdata-network
+    command: scheduler
+
+  # 10. Postgres
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
     networks:
       - bigdata-network
 
 networks:
   bigdata-network:
     driver: bridge
-
-volumes:
-  mongo_data:
