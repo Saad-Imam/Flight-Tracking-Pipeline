@@ -1,0 +1,10 @@
+streamlit>=1.28.0
+pymongo>=4.5.0
+redis>=4.6.0
+pandas>=2.0.0
+numpy>=1.24.0
+plotly>=5.17.0
+pyhive>=0.7.0
+thrift-sasl>=0.4.3
+pyspark[hive]>=3.5.0
+
