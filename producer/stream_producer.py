@@ -3,6 +3,7 @@ import json
 import pickle
 import random
 from kafka import KafkaProducer
+from kafka.errors import NoBrokersAvailable
 from datetime import datetime
 
 # Configuration
@@ -14,13 +15,42 @@ print("Loading Statistical Model...")
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# 2. Setup Kafka
-# retries=5 helps if the script starts before Kafka is fully ready
-producer = KafkaProducer(
-    bootstrap_servers=[KAFKA_BROKER],
-    value_serializer=lambda x: json.dumps(x).encode('utf-8'),
-    retries=5 
-)
+# 2. Setup Kafka - Wait for Kafka to be ready
+print("Waiting for Kafka to be ready...")
+producer = None
+max_retries = 30
+retry_count = 0
+
+while producer is None and retry_count < max_retries:
+    try:
+        producer = KafkaProducer(
+            bootstrap_servers=[KAFKA_BROKER],
+            value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+            api_version=(0, 10, 1),
+            retries=5,
+            request_timeout_ms=10000
+        )
+        print("Kafka connection established!")
+        break
+    except NoBrokersAvailable:
+        retry_count += 1
+        print(f"Waiting for Kafka... (attempt {retry_count}/{max_retries})")
+        if retry_count < max_retries:
+            time.sleep(2)
+        else:
+            print("Failed to connect to Kafka after maximum retries")
+            raise
+    except Exception as e:
+        # Other errors - might mean Kafka is up but something else is wrong
+        print(f"Unexpected error connecting to Kafka: {e}")
+        retry_count += 1
+        if retry_count < max_retries:
+            time.sleep(2)
+        else:
+            raise
+
+if producer is None:
+    raise RuntimeError("Failed to create Kafka producer")
 
 print("Starting Stream...")
 

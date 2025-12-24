@@ -21,9 +21,13 @@ RUN curl -o spark-3.5.1-bin-hadoop3.tgz https://archive.apache.org/dist/spark/sp
 ENV SPARK_HOME=/opt/spark
 ENV PATH=$PATH:$SPARK_HOME/bin
 
+# 5. Copy initialization script (as root)
+COPY init-airflow.sh /init-airflow.sh
+RUN chmod +x /init-airflow.sh && chown airflow:root /init-airflow.sh
+
 USER airflow
 
-# 5. Install Python dependencies
+# 6. Install Python dependencies
 # UPDATED: We removed '==3.5.0'. The constraint file will automatically install 3.5.1
-RUN pip install apache-airflow-providers-apache-spark pyspark \
+RUN pip install apache-airflow-providers-apache-spark pyspark pymongo redis \
     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.3/constraints-3.9.txt"

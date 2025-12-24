@@ -32,7 +32,7 @@ spark_job = SparkSubmitOperator(
     conn_id='spark_default', 
     
     application='/opt/airflow/dags/spark_processor.py',
-    packages='org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1',
+    packages='org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:3.0.1',
     conf=spark_conf,
     verbose=True,
     dag=dag

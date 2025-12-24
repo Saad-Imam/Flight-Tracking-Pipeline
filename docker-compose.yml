@@ -1,4 +1,4 @@
-version: '3.8'
+# Removed version - it's obsolete in newer docker-compose
 
 services:
   
@@ -31,6 +31,12 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
       - bigdata-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   # 3. Kafka UI 
   kafka-ui:
@@ -52,7 +58,8 @@ services:
     build: ./producer
     container_name: flight-producer
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     restart: always
     networks:
       - bigdata-network
@@ -91,16 +98,13 @@ services:
   airflow-init:
     build: ./airflow
     container_name: airflow-init
-    command: version
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-    entrypoint: >
-      bash -c "airflow db init &&
-      airflow users create --username admin --password admin --firstname Peter --lastname Parker --role Admin --email spiderman@superhero.org &&
-      airflow db upgrade"
+    entrypoint: /init-airflow.sh
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - bigdata-network
 
@@ -156,6 +160,162 @@ services:
       - POSTGRES_DB=airflow
     networks:
       - bigdata-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 11. MongoDB (Operational Data Store)
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=flight_tracking
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - bigdata-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 12. Redis (Caching Layer)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - bigdata-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 13. HDFS Namenode
+  hdfs-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: hdfs-namenode
+    environment:
+      - CLUSTER_NAME=flight_cluster
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - hdfs_namenode_data:/hadoop/dfs/name
+    networks:
+      - bigdata-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9870"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 14. HDFS Datanode
+  hdfs-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hdfs-datanode
+    environment:
+      - SERVICE_PRECONDITION=hdfs-namenode:9870
+    ports:
+      - "9864:9864"
+    volumes:
+      - hdfs_datanode_data:/hadoop/dfs/data
+    depends_on:
+      - hdfs-namenode
+    networks:
+      - bigdata-network
+
+  # 15. Hive Metastore (PostgreSQL backend)
+  postgres-hive:
+    image: postgres:13
+    container_name: postgres-hive
+    environment:
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hive
+      - POSTGRES_DB=metastore
+    networks:
+      - bigdata-network
+    volumes:
+      - postgres_hive_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 16. Hive Metastore Service
+  hive-metastore:
+    image: apache/hive:3.1.3
+    container_name: hive-metastore
+    environment:
+      - SERVICE_NAME=hive-metastore
+      - DB_DRIVER=postgres
+      - SKIP_SCHEMA_INIT=false
+      - SERVICE_OPTS=-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-hive:5432/metastore -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=hive
+      - HADOOP_CLIENT_OPTS=-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-hive:5432/metastore -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=hive
+    ports:
+      - "9083:9083"
+    depends_on:
+      postgres-hive:
+        condition: service_healthy
+      hdfs-namenode:
+        condition: service_started
+    networks:
+      - bigdata-network
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        export HADOOP_CLIENT_OPTS="-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-hive:5432/metastore -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=hive"
+        echo "Waiting for PostgreSQL to be ready (10 seconds)..."
+        sleep 10
+        echo "Checking Hive schema status..."
+        if /opt/hive/bin/schematool -dbType postgres -info 2>&1 | grep -q "schemaTool completed\|Hive distribution version"; then
+          echo "Hive schema exists and is valid, starting metastore..."
+        else
+          echo "Schema not found or invalid, initializing with PostgreSQL..."
+          /opt/hive/bin/schematool -dbType postgres -initSchema --verbose 2>&1 || (echo "ERROR: Schema initialization failed." && exit 1)
+        fi
+        echo "Starting Hive Metastore..."
+        exec /opt/hive/bin/hive --service metastore
+
+  # 17. Streamlit Dashboard
+  streamlit-dashboard:
+    build: ./dashboard
+    container_name: streamlit-dashboard
+    ports:
+      - "8501:8501"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres-hive:
+        condition: service_started
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - HIVE_HOST=postgres-hive
+      - SPARK_MASTER=spark://spark-master:7077
+    networks:
+      - bigdata-network
+    volumes:
+      - ./dashboard:/app
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  hdfs_namenode_data:
+  hdfs_datanode_data:
+  postgres_hive_data:
 
 networks:
   bigdata-network:

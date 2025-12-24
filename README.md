@@ -134,8 +134,31 @@ The dashboard visualizes the following 5 KPIs derived via Spark SQL aggregations
 
 ## 📦 Archiving Policy
 *   **Threshold:** 300 MB of data in MongoDB (Hot Store).
+*   **Trigger:** Automated monitoring every 5 minutes via Airflow DAG.
+*   **Retention:** 7-day sliding window in MongoDB (configurable).
 *   **Format:** Parquet (Snappy Compression) on HDFS.
-*   **Metadata:** JSON sidecar files stored in HDFS `/metadata/` containing batch IDs and schema versions.
+*   **Metadata:** 
+    - JSON files in HDFS `/metadata/` containing batch IDs, schema versions, timestamps, record counts
+    - Hive metadata tables for SQL-based queries
+
+## 📊 Dashboard Pages
+
+The Streamlit dashboard consists of 6 comprehensive pages:
+
+1. **Real-Time Overview**: Live KPIs, data ingestion rates, MongoDB size, system latency
+2. **Streaming Analytics**: Time-series charts, rolling aggregates, window-based metrics, trend analysis
+3. **Historical Analytics**: Daily/hourly aggregations, day-of-week analysis, OLAP drill-downs
+4. **Prediction & Insights**: ML predictions, actual vs predicted comparisons, anomaly detection, confidence analysis
+5. **Data Quality & Metadata**: Schema information, missing values, data freshness, archive metadata, quality scores
+6. **Operations & Monitoring**: Airflow DAG status, Spark job execution, archive events, cache performance, pipeline health
+
+**Auto-refresh**: Dashboard automatically refreshes every 60 seconds.
+
+---
+
+## 📚 Documentation
+
+For detailed architectural documentation, design decisions, and technical justifications, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
