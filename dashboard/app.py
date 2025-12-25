@@ -298,19 +298,9 @@ elif page == "Data Quality & Metadata":
 elif page == "Operations & Monitoring":
     operations_monitoring.render(mongodb_client, redis_client)
 
-# Footer with connection status
-st.sidebar.markdown("---")
-st.sidebar.markdown("**🔌 System Status**")
 
-if mongodb_client:
-    st.sidebar.success("✅ MongoDB")
-else:
-    st.sidebar.error("❌ MongoDB")
+# Footer with connection status removed as per user request
 
-if redis_client:
-    st.sidebar.success("✅ Redis")
-else:
-    st.sidebar.error("❌ Redis")
 
 # Last updated timestamp
 st.sidebar.markdown("---")

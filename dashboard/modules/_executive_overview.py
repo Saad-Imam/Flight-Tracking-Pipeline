@@ -583,6 +583,92 @@ def render(mongodb_client, redis_client):
             else:
                 st.info("No airports with coordinate data found in the current dataset")
 
+        # ============== LIVE FLIGHT BOARD ==============
+        st.markdown('<div class="section-header">✈️ Live Flight Status Board</div>', unsafe_allow_html=True)
+        
+        if not df.empty:
+            # Prepare data for the board
+            board_df = df.copy()
+            
+            # Format Timestamp
+            board_df['Time'] = board_df['timestamp'].dt.strftime('%H:%M')
+            
+            # Create Flight Number (Simulated as Airline + ID suffix)
+            board_df['Flight'] = board_df['airline_code'] + " " + board_df['flight_id'].astype(str).str[-4:]
+            
+            # Determine Status with NaN handling
+            def get_status(delay):
+                if pd.isna(delay): return "PENDING"
+                if delay < 0: return "EARLY"
+                elif delay < 15: return "ON TIME"
+                elif delay < 60: return "DELAYED"
+                else: return "SEVERE"
+                
+            if 'dep_delay' in board_df.columns:
+                board_df['Status'] = board_df['dep_delay'].apply(get_status)
+            else:
+                board_df['Status'] = "UNKNOWN"
+            
+            # Filter out PENDING rows (missing data)
+            board_df = board_df[board_df['Status'] != 'PENDING']
+            
+            # Handle prediction columns - Fill NaNs with 0 only for non-pending to avoid confusion
+            # Actually, let's keep NaNs as NaNs for display, so they show as empty/distinct from 0
+            
+            # Select and Rename Columns
+            display_df = board_df[[
+                'Time', 'Flight', 'origin', 'dest', 'Status', 'dep_delay', 'predicted_delay'
+            ]].head(20) # Show top 20 latest
+            
+            display_df.columns = [
+                'Time', 'Flight', 'Origin', 'Destination', 'Status', 'Actual Delay', 'Predicted Delay'
+            ]
+            
+            # Define color functions
+            def color_status(val):
+                color = 'white'
+                if val == 'SEVERE': color = '#ef4444' # Red
+                elif val == 'DELAYED': color = '#f59e0b' # Orange
+                elif val == 'ON TIME': color = '#22c55e' # Green
+                elif val == 'EARLY': color = '#3b82f6' # Blue
+                elif val == 'PENDING': color = '#94a3b8' # Grey
+                return f'color: {color}; font-weight: bold'
+            
+            def color_delay(val):
+                if pd.isna(val): return 'color: #94a3b8'
+                if val > 60: return 'color: #ef4444'
+                if val > 15: return 'color: #f59e0b'
+                if val < 0: return 'color: #3b82f6'
+                return 'color: #22c55e'
+
+            # Apply styling
+            styled_df = display_df.style.map(color_status, subset=['Status'])\
+                                      .map(color_delay, subset=['Actual Delay', 'Predicted Delay'])\
+                                      .format({'Actual Delay': "{:.0f} min", 'Predicted Delay': "{:.0f} min"}, na_rep="--")
+
+            # Custom styled dataframe
+            st.dataframe(
+                styled_df,
+                column_config={
+                    "Time": st.column_config.TextColumn("Time", help="Departure Time"),
+                    "Flight": st.column_config.TextColumn("Flight"),
+                    "Origin": st.column_config.TextColumn("Origin"),
+                    "Destination": st.column_config.TextColumn("Dest"),
+                    "Status": st.column_config.TextColumn("Status", width="medium"),
+                    "Actual Delay": st.column_config.TextColumn("Actual Delay"),
+                    "Predicted Delay": st.column_config.TextColumn("Pred. Delay"),
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+            
+            # Legend for table
+            st.markdown("""
+            <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px; margin-bottom: 20px;">
+                * Showing latest 20 flights. <span style="color: #ef4444;">Red</span> = Severe, <span style="color: #f59e0b;">Orange</span> = Delayed, <span style="color: #22c55e;">Green</span> = On Time.
+            </div>
+            """, unsafe_allow_html=True)
+
         
         # ============== METRICS ROW ==============
         st.markdown('<div class="section-header">📊 Quick Stats</div>', unsafe_allow_html=True)
@@ -591,7 +677,7 @@ def render(mongodb_client, redis_client):
         
         with col1:
             severe_delays = (df['dep_delay'] > 60).sum() if 'dep_delay' in df.columns else 0
-            st.metric("🚨 Severe Delays", severe_delays, delta=f"{severe_delays/len(df)*100:.1f}%")
+            st.metric("🚨 Severe Delays", severe_delays, delta=f"{severe_delays/len(df)*100:.1f}%", delta_color="inverse" )
         
         with col2:
             unique_airlines = df['airline_code'].nunique() if 'airline_code' in df.columns else 0
