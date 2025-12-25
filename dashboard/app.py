@@ -26,7 +26,7 @@ import modules._operations_monitoring as operations_monitoring
 # Page configuration
 st.set_page_config(
     page_title="Flight Tracking Analytics Dashboard",
-    page_icon="✈️",
+    page_icon="️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -230,7 +230,7 @@ footer {visibility: hidden;}
 # LOGO FIRST - At the very top of sidebar
 st.sidebar.markdown("""
 <div style="text-align: center; padding: 20px 0 10px 0;">
-    <h1 style="font-size: 1.8rem; margin: 0;">✈️ Flight Tracker</h1>
+    <h1 style="font-size: 1.8rem; margin: 0;">️ ✈️ Flight Tracker</h1>
     <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px;">Analytics Dashboard</p>
 </div>
 """, unsafe_allow_html=True)
@@ -239,7 +239,7 @@ st.sidebar.markdown("---")
 
 # Navigation dropdown
 page = st.sidebar.selectbox(
-    "📍 Navigate to:",
+    " Navigate to:",
     [
         "Executive Overview",
         "Real-Time Overview",
@@ -306,8 +306,8 @@ elif page == "Operations & Monitoring":
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"""
 <div style="text-align: center; padding: 10px; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
-    <p style="color: #64748b; font-size: 0.75rem; margin: 0;">Last Updated</p>
-    <p style="color: #94a3b8; font-size: 0.85rem; margin: 5px 0 0 0; font-weight: 500;">{datetime.now().strftime('%H:%M:%S')}</p>
+    <p style="color: #64748b; font-size: 0.75rem; margin: 0;">Last Updated (PKT)</p>
+    <p style="color: #94a3b8; font-size: 0.85rem; margin: 5px 0 0 0; font-weight: 500;">{(datetime.utcnow() + timedelta(hours=5)).strftime('%H:%M:%S')}</p>
 </div>
 """, unsafe_allow_html=True)
 

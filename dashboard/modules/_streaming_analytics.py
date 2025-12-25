@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import pymongo
 
 def render(mongodb_client, redis_client):
-    st.title("📈 Streaming Analytics")
+    st.title(" Streaming Analytics")
     st.markdown("Real-time analytics and time-series visualizations")
     
     if not mongodb_client:
@@ -52,7 +52,7 @@ def render(mongodb_client, redis_client):
             df = df.sort_values('timestamp')
         
         # Time-series: Average Delay Over Time
-        st.subheader("⏱️ Average Departure Delay Over Time")
+        st.subheader("️ Average Departure Delay Over Time")
         
         if group_by == "Minute":
             df_grouped = df.groupby(df['timestamp'].dt.floor('1T')).agg({
@@ -89,7 +89,7 @@ def render(mongodb_client, redis_client):
         st.plotly_chart(fig, use_container_width=True)
         
         # Rolling aggregates
-        st.subheader("📊 Rolling Aggregates")
+        st.subheader(" Rolling Aggregates")
         
         col1, col2 = st.columns(2)
         
@@ -119,7 +119,7 @@ def render(mongodb_client, redis_client):
                 st.plotly_chart(fig_dist, use_container_width=True)
         
         # Window-based metrics
-        st.subheader("🪟 Window-Based Metrics")
+        st.subheader(" Window-Based Metrics")
         
         col1, col2, col3 = st.columns(3)
         
@@ -132,7 +132,7 @@ def render(mongodb_client, redis_client):
                 st.metric("Current Window Min", f"{df['dep_delay'].tail(100).min():.2f} min")
         
         # Trend analysis
-        st.subheader("📈 Trend Analysis")
+        st.subheader(" Trend Analysis")
         
         if 'timestamp' in df.columns and 'dep_delay' in df.columns:
             # Linear trend

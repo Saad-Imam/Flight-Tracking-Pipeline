@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import pymongo
 
 def render(mongodb_client, redis_client):
-    st.title("📚 Historical Analytics")
+    st.title(" Historical Analytics")
     st.markdown("Long-term trends and comparative analysis")
     
     if not mongodb_client:
@@ -52,7 +52,7 @@ def render(mongodb_client, redis_client):
             df['day_of_week'] = df['timestamp'].dt.day_name()
         
         # Daily aggregations
-        st.subheader("📅 Daily Aggregations")
+        st.subheader(" Daily Aggregations")
         
         if 'date' in df.columns and 'dep_delay' in df.columns:
             daily_stats = df.groupby('date').agg({
@@ -84,7 +84,7 @@ def render(mongodb_client, redis_client):
                 st.plotly_chart(fig_count, use_container_width=True)
         
         # Hourly aggregations
-        st.subheader("🕐 Hourly Aggregations")
+        st.subheader(" Hourly Aggregations")
         
         if 'hour' in df.columns and 'dep_delay' in df.columns:
             hourly_stats = df.groupby('hour').agg({
@@ -103,7 +103,7 @@ def render(mongodb_client, redis_client):
             st.plotly_chart(fig_hourly, use_container_width=True)
         
         # Day of week analysis
-        st.subheader("📆 Day of Week Analysis")
+        st.subheader(" Day of Week Analysis")
         
         if 'day_of_week' in df.columns and 'dep_delay' in df.columns:
             day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -120,7 +120,7 @@ def render(mongodb_client, redis_client):
             st.plotly_chart(fig_day, use_container_width=True)
         
         # OLAP-style drill-down
-        st.subheader("🔍 OLAP Drill-Down Analysis")
+        st.subheader(" OLAP Drill-Down Analysis")
         
         drill_level = st.selectbox("Drill Level", ["Airline", "Origin", "Destination", "Route"])
         
