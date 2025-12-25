@@ -11,7 +11,7 @@ import json
 import numpy as np
 
 def render(mongodb_client, redis_client):
-    st.title("🔍 Data Quality & Metadata")
+    st.title(" Data Quality & Metadata")
     st.markdown("Data quality metrics, schema information, and metadata management")
     
     if not mongodb_client:
@@ -23,7 +23,7 @@ def render(mongodb_client, redis_client):
         collection = db.flight_events
         
         # Schema Information
-        st.subheader("📋 Schema Information")
+        st.subheader(" Schema Information")
         
         # Get a sample document to infer schema
         sample_doc = collection.find_one()
@@ -40,7 +40,7 @@ def render(mongodb_client, redis_client):
             st.dataframe(schema_df, use_container_width=True)
         
         # Data Quality Metrics
-        st.subheader("📊 Data Quality Metrics")
+        st.subheader(" Data Quality Metrics")
         
         # Fetch sample data for analysis
         cursor = collection.find().limit(10000)
@@ -70,10 +70,10 @@ def render(mongodb_client, redis_client):
                 )
                 st.plotly_chart(fig_missing, use_container_width=True)
             else:
-                st.success("✅ No missing values detected")
+                st.success(" No missing values detected")
             
             # Data freshness
-            st.subheader("🕐 Data Freshness")
+            st.subheader(" Data Freshness")
             
             if 'timestamp' in df.columns:
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -90,7 +90,7 @@ def render(mongodb_client, redis_client):
                     st.metric("Data Age", f"{age_hours:.2f} hours")
             
             # Record counts per batch
-            st.subheader("📦 Record Counts")
+            st.subheader(" Record Counts")
             
             if 'ingestion_timestamp' in df.columns:
                 df['ingestion_timestamp'] = pd.to_datetime(df['ingestion_timestamp'])
@@ -108,7 +108,7 @@ def render(mongodb_client, redis_client):
                 st.plotly_chart(fig_counts, use_container_width=True)
         
         # Archive Metadata
-        st.subheader("📚 Archive Metadata")
+        st.subheader(" Archive Metadata")
         
         # Try to get archive information from Hive or display placeholder
         st.info("Archive metadata is stored in Hive Data Warehouse. Connect to Hive to view detailed archive information.")
@@ -128,7 +128,7 @@ def render(mongodb_client, redis_client):
         st.dataframe(archive_df, use_container_width=True, hide_index=True)
         
         # Data Quality Score
-        st.subheader("⭐ Overall Data Quality Score")
+        st.subheader(" Overall Data Quality Score")
         
         if not df.empty:
             # Calculate quality score based on multiple factors
@@ -182,14 +182,14 @@ def render(mongodb_client, redis_client):
                 st.metric("Quality Score", f"{quality_score:.1f}/100")
                 
                 if quality_score >= 90:
-                    st.success("✅ Excellent data quality")
+                    st.success(" Excellent data quality")
                 elif quality_score >= 70:
-                    st.info("⚠️ Good data quality with room for improvement")
+                    st.info("️ Good data quality with room for improvement")
                 else:
-                    st.error("❌ Data quality needs attention")
+                    st.error(" Data quality needs attention")
         
         # Field Statistics
-        st.subheader("📈 Field Statistics")
+        st.subheader(" Field Statistics")
         
         if not df.empty:
             numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()

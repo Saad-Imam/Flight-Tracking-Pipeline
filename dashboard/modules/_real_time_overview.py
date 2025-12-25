@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import pymongo
 
 def render(mongodb_client, redis_client):
-    st.title("📊 Real-Time Overview")
+    st.title(" Real-Time Overview")
     st.markdown("Live system metrics and KPIs")
     
     if not mongodb_client:
@@ -41,34 +41,34 @@ def render(mongodb_client, redis_client):
         
         with col1:
             st.metric(
-                label="📈 Incoming Data Rate",
+                label=" Incoming Data Rate",
                 value=f"{recent_records} records/min",
                 delta=f"{recent_records} last minute"
             )
         
         with col2:
             st.metric(
-                label="📦 Total Records",
+                label=" Total Records",
                 value=f"{total_records:,}",
                 delta="MongoDB"
             )
         
         with col3:
             st.metric(
-                label="💾 MongoDB Size",
+                label=" MongoDB Size",
                 value=f"{mongo_size_mb:.2f} MB",
-                delta=f"{300 - mongo_size_mb:.2f} MB to threshold" if mongo_size_mb < 300 else "⚠️ Over threshold"
+                delta=f"{300 - mongo_size_mb:.2f} MB to threshold" if mongo_size_mb < 300 else "️ Over threshold"
             )
         
         with col4:
             st.metric(
-                label="⚡ System Latency",
+                label=" System Latency",
                 value=f"{latency_seconds:.1f}s",
                 delta="Last record"
             )
         
         # Time series of incoming data
-        st.subheader("📈 Data Ingestion Rate (Last 10 Minutes)")
+        st.subheader(" Data Ingestion Rate (Last 10 Minutes)")
         time_windows = []
         record_counts = []
         
@@ -93,7 +93,7 @@ def render(mongodb_client, redis_client):
         st.plotly_chart(fig, use_container_width=True)
         
         # Latest records table
-        st.subheader("🔄 Latest Flight Events")
+        st.subheader(" Latest Flight Events")
         latest_records = list(collection.find().sort("timestamp", -1).limit(10))
         
         if latest_records:

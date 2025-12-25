@@ -2,10 +2,10 @@
 
 This document summarizes the complete implementation of the Big Data Streaming Analytics Architecture for Flight Tracking.
 
-## ✅ Completed Components
+##  Completed Components
 
 ### 1. Docker Infrastructure
-- ✅ Updated `docker-compose.yml` with all required services:
+-  Updated `docker-compose.yml` with all required services:
   - Kafka + Zookeeper
   - Spark Master + Worker
   - Airflow (Webserver + Scheduler)
@@ -16,7 +16,7 @@ This document summarizes the complete implementation of the Big Data Streaming A
   - Streamlit Dashboard
 
 ### 2. Data Processing Pipeline
-- ✅ **Spark Processor** (`dags/spark_processor.py`):
+-  **Spark Processor** (`dags/spark_processor.py`):
   - Kafka ingestion (micro-batch processing)
   - Data cleaning and enrichment (staging layer)
   - ML model inference (XGBoost prediction)
@@ -26,36 +26,36 @@ This document summarizes the complete implementation of the Big Data Streaming A
   - Metadata generation and storage
 
 ### 3. Archiving System
-- ✅ **Archiving DAG** (`dags/archiving_dag.py`):
+-  **Archiving DAG** (`dags/archiving_dag.py`):
   - MongoDB size monitoring (every 5 minutes)
   - 300 MB threshold detection
   - Automated archiving to HDFS
   - Archive metadata tracking
 
-- ✅ **Archive Processor** (`dags/archive_processor.py`):
+-  **Archive Processor** (`dags/archive_processor.py`):
   - Reads old records from MongoDB
   - Writes to HDFS as Parquet
   - Updates metadata tables
   - Cleans up MongoDB after archiving
 
 ### 4. Metadata Management
-- ✅ **Metadata Initialization** (`dags/init_metadata.py`):
+-  **Metadata Initialization** (`dags/init_metadata.py`):
   - Creates Hive metadata tables
   - Schema metadata tracking
   - Batch metadata tracking
   - Archive metadata tracking
 
-- ✅ Metadata storage in:
+-  Metadata storage in:
   - HDFS JSON files (`/metadata/`)
   - Hive metadata tables (`flight_dw` database)
 
 ### 5. Streamlit Dashboard
-- ✅ **Main App** (`dashboard/app.py`):
+-  **Main App** (`dashboard/app.py`):
   - Multi-page navigation
   - Auto-refresh every 60 seconds
   - Connection management (MongoDB, Redis)
 
-- ✅ **6 Dashboard Pages**:
+-  **6 Dashboard Pages**:
   1. **Real-Time Overview** (`dashboard/pages/real_time_overview.py`):
      - Live KPIs (data rate, total records, MongoDB size, latency)
      - Data ingestion rate charts
@@ -98,18 +98,18 @@ This document summarizes the complete implementation of the Big Data Streaming A
      - Pipeline health score
 
 ### 6. Airflow DAGs
-- ✅ **Flight Processing DAG** (`dags/flight_dag.py`):
+-  **Flight Processing DAG** (`dags/flight_dag.py`):
   - Scheduled every 1 minute
   - Triggers Spark processing job
   - Handles Kafka → MongoDB → HDFS → Hive pipeline
 
-- ✅ **Archiving DAG** (`dags/archiving_dag.py`):
+-  **Archiving DAG** (`dags/archiving_dag.py`):
   - Scheduled every 5 minutes
   - Monitors MongoDB size
   - Triggers archiving when threshold exceeded
 
 ### 7. Documentation
-- ✅ **Architecture Documentation** (`ARCHITECTURE.md`):
+-  **Architecture Documentation** (`ARCHITECTURE.md`):
   - Complete architectural design
   - Component justifications
   - Data flow diagrams
@@ -117,12 +117,12 @@ This document summarizes the complete implementation of the Big Data Streaming A
   - Security considerations
   - Deployment architecture
 
-- ✅ **Updated README** (`README.md`):
+-  **Updated README** (`README.md`):
   - Installation instructions
   - Service access information
   - Dashboard page descriptions
 
-## 🔧 Configuration Files
+##  Configuration Files
 
 ### Docker Configuration
 - `docker-compose.yml`: Complete service orchestration
@@ -143,7 +143,7 @@ This document summarizes the complete implementation of the Big Data Streaming A
 ### Dependencies
 - `dashboard/requirements.txt`: Python dependencies for dashboard
 
-## 📊 Data Flow
+##  Data Flow
 
 ```
 Producer → Kafka → Spark Processor → MongoDB (Hot)
@@ -155,20 +155,20 @@ Producer → Kafka → Spark Processor → MongoDB (Hot)
                     Streamlit Dashboard
 ```
 
-## 🎯 Key Features Implemented
+##  Key Features Implemented
 
-1. ✅ **Real-time Streaming**: Kafka + Spark Structured Streaming
-2. ✅ **Operational Data Store**: MongoDB with 300 MB threshold
-3. ✅ **Cold Storage**: HDFS with Parquet format
-4. ✅ **Data Warehouse**: Hive with staging, fact, and predictions tables
-5. ✅ **Metadata Management**: HDFS JSON + Hive tables
-6. ✅ **ML Inference**: XGBoost model integration
-7. ✅ **Automated Archiving**: 300 MB threshold with 7-day retention
-8. ✅ **Comprehensive Dashboard**: 6 pages with auto-refresh
-9. ✅ **Orchestration**: Airflow DAGs for all workflows
-10. ✅ **Caching**: Redis integration ready
+1.  **Real-time Streaming**: Kafka + Spark Structured Streaming
+2.  **Operational Data Store**: MongoDB with 300 MB threshold
+3.  **Cold Storage**: HDFS with Parquet format
+4.  **Data Warehouse**: Hive with staging, fact, and predictions tables
+5.  **Metadata Management**: HDFS JSON + Hive tables
+6.  **ML Inference**: XGBoost model integration
+7.  **Automated Archiving**: 300 MB threshold with 7-day retention
+8.  **Comprehensive Dashboard**: 6 pages with auto-refresh
+9.  **Orchestration**: Airflow DAGs for all workflows
+10.  **Caching**: Redis integration ready
 
-## 🚀 Next Steps for Deployment
+##  Next Steps for Deployment
 
 1. **Model Deployment**: Copy `xgboost_flight_delay_model.pkl` to accessible location for Spark workers
 2. **Service Initialization**: Run metadata initialization script
@@ -176,7 +176,7 @@ Producer → Kafka → Spark Processor → MongoDB (Hot)
 4. **Monitoring**: Set up alerting for DAG failures and MongoDB size
 5. **Scaling**: Configure additional Spark workers if needed
 
-## 📝 Notes
+##  Notes
 
 - The ML model loading in Spark processor uses a fallback heuristic if the model file is not found
 - Hive tables use Delta format (can be changed to Parquet if Delta is not available)

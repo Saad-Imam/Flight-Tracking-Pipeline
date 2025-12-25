@@ -56,7 +56,7 @@ def render(mongodb_client, redis_client):
     </style>
     """, unsafe_allow_html=True)
     
-    st.title("📊 Executive Overview")
+    st.title(" Executive Overview")
     st.markdown("Real-time flight operations intelligence dashboard")
     
     if not mongodb_client:
@@ -101,7 +101,7 @@ def render(mongodb_client, redis_client):
             accuracy = 0
         
         # ============== KPI CARDS ==============
-        st.markdown('<div class="section-header">📈 Key Performance Indicators</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header"> Key Performance Indicators</div>', unsafe_allow_html=True)
         
         col1, col2, col3, col4 = st.columns(4)
         
@@ -147,7 +147,7 @@ def render(mongodb_client, redis_client):
         st.markdown("<br>", unsafe_allow_html=True)
         
         # ============== CHARTS ROW 1 ==============
-        st.markdown('<div class="section-header">🎯 Delay Analysis</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header"> Delay Analysis</div>', unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         
@@ -233,7 +233,7 @@ def render(mongodb_client, redis_client):
                 st.plotly_chart(fig_bar, use_container_width=True)
         
         # ============== CHARTS ROW 2 ==============
-        st.markdown('<div class="section-header">🔮 Prediction Insights</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header"> Prediction Insights</div>', unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         
@@ -322,7 +322,7 @@ def render(mongodb_client, redis_client):
                 st.plotly_chart(fig_heatmap, use_container_width=True)
         
         # ============== CHARTS ROW 3 ==============
-        st.markdown('<div class="section-header">📍 Geographic & Route Analysis</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header"> Geographic & Route Analysis</div>', unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         
@@ -409,7 +409,7 @@ def render(mongodb_client, redis_client):
                 st.plotly_chart(fig_trend, use_container_width=True)
         
         # ============== AIR TRAFFIC MAP ==============
-        st.markdown('<div class="section-header">🗺️ Air Traffic Map - Delays by Airport</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">️ Air Traffic Map - Delays by Airport</div>', unsafe_allow_html=True)
         
         # US Airport coordinates database
         airport_coords = {
@@ -531,7 +531,7 @@ def render(mongodb_client, redis_client):
                 
                 fig_map.update_layout(
                     title=dict(
-                        text='✈️ US Airport Delays - Click & Drag to Explore | Scroll to Zoom',
+                        text='️ US Airport Delays - Click & Drag to Explore | Scroll to Zoom',
                         font=dict(size=16, color='white'),
                         x=0.5,
                         xanchor='center'
@@ -575,7 +575,7 @@ def render(mongodb_client, redis_client):
                 st.markdown("""
                 <div style="text-align: center; padding: 10px; background: rgba(30, 41, 59, 0.5); border-radius: 8px; margin-top: -10px;">
                     <span style="color: #94a3b8; font-size: 0.85rem;">
-                        🟢 Low Delay &nbsp;|&nbsp; 🟡 Moderate &nbsp;|&nbsp; 🔴 High Delay &nbsp;|&nbsp; 
+                         Low Delay &nbsp;|&nbsp;  Moderate &nbsp;|&nbsp;  High Delay &nbsp;|&nbsp; 
                         <b>Bubble Size</b> = Total Delay Minutes
                     </span>
                 </div>
@@ -584,7 +584,7 @@ def render(mongodb_client, redis_client):
                 st.info("No airports with coordinate data found in the current dataset")
 
         # ============== LIVE FLIGHT BOARD ==============
-        st.markdown('<div class="section-header">✈️ Live Flight Status Board</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">️ Live Flight Status Board</div>', unsafe_allow_html=True)
         
         if not df.empty:
             # Prepare data for the board
@@ -671,33 +671,33 @@ def render(mongodb_client, redis_client):
 
         
         # ============== METRICS ROW ==============
-        st.markdown('<div class="section-header">📊 Quick Stats</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header"> Quick Stats</div>', unsafe_allow_html=True)
         
         col1, col2, col3, col4, col5, col6 = st.columns(6)
         
         with col1:
             severe_delays = (df['dep_delay'] > 60).sum() if 'dep_delay' in df.columns else 0
-            st.metric("🚨 Severe Delays", severe_delays, delta=f"{severe_delays/len(df)*100:.1f}%", delta_color="inverse" )
+            st.metric(" Severe Delays", severe_delays, delta=f"{severe_delays/len(df)*100:.1f}%", delta_color="inverse" )
         
         with col2:
             unique_airlines = df['airline_code'].nunique() if 'airline_code' in df.columns else 0
-            st.metric("✈️ Airlines", unique_airlines)
+            st.metric("️ Airlines", unique_airlines)
         
         with col3:
             unique_origins = df['origin'].nunique() if 'origin' in df.columns else 0
-            st.metric("🛫 Origins", unique_origins)
+            st.metric(" Origins", unique_origins)
         
         with col4:
             unique_dests = df['dest'].nunique() if 'dest' in df.columns else 0
-            st.metric("🛬 Destinations", unique_dests)
+            st.metric(" Destinations", unique_dests)
         
         with col5:
             max_delay = df['dep_delay'].max() if 'dep_delay' in df.columns else 0
-            st.metric("⏰ Max Delay", f"{max_delay:.0f} min")
+            st.metric(" Max Delay", f"{max_delay:.0f} min")
         
         with col6:
             median_delay = df['dep_delay'].median() if 'dep_delay' in df.columns else 0
-            st.metric("📈 Median Delay", f"{median_delay:.1f} min")
+            st.metric(" Median Delay", f"{median_delay:.1f} min")
             
     except Exception as e:
         st.error(f"Error loading executive overview: {e}")

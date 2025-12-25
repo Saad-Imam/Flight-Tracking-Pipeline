@@ -10,7 +10,7 @@ import pymongo
 import numpy as np
 
 def render(mongodb_client, redis_client):
-    st.title("🔮 Prediction & Insights")
+    st.title(" Prediction & Insights")
     st.markdown("Machine learning predictions and model performance")
     
     if not mongodb_client:
@@ -35,7 +35,7 @@ def render(mongodb_client, redis_client):
             df['timestamp'] = pd.to_datetime(df['timestamp'])
         
         # Prediction Distribution
-        st.subheader("📊 Prediction Distribution")
+        st.subheader(" Prediction Distribution")
         
         col1, col2 = st.columns(2)
         
@@ -62,7 +62,7 @@ def render(mongodb_client, redis_client):
                 st.plotly_chart(fig_conf, use_container_width=True)
         
         # Actual vs Predicted
-        st.subheader("⚖️ Actual vs Predicted Delays")
+        st.subheader("️ Actual vs Predicted Delays")
         
         if 'predicted_delay' in df.columns and 'dep_delay' in df.columns:
             # Scatter plot
@@ -110,7 +110,7 @@ def render(mongodb_client, redis_client):
                 st.metric("Accuracy (±10min)", f"{accuracy_10min:.1f}%")
         
         # Prediction Accuracy Over Time
-        st.subheader("📈 Prediction Accuracy Over Time")
+        st.subheader(" Prediction Accuracy Over Time")
         
         if 'timestamp' in df.columns and 'error' in df.columns:
             df['date'] = df['timestamp'].dt.date
@@ -129,7 +129,7 @@ def render(mongodb_client, redis_client):
             st.plotly_chart(fig_acc, use_container_width=True)
         
         # Anomaly Detection
-        st.subheader("🚨 Anomaly Detection")
+        st.subheader(" Anomaly Detection")
         
         if 'predicted_delay' in df.columns and 'dep_delay' in df.columns:
             # Calculate anomaly score (deviation from prediction)
@@ -159,7 +159,7 @@ def render(mongodb_client, redis_client):
                 st.dataframe(anomalies[available_cols].head(50), use_container_width=True)
         
         # Confidence Analysis
-        st.subheader("🎯 Confidence-Based Analysis")
+        st.subheader(" Confidence-Based Analysis")
         
         if 'prediction_confidence' in df.columns:
             confidence_threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.7)

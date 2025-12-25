@@ -1,7 +1,7 @@
 **A Big Data Architecture Project for Real-Time Ingestion, Processing, Storage, and Predictive Analytics of Flight Data.**
 
 ---
-### 🎯 Business Problem
+###  Business Problem
 **Domain:** Aviation & Supply Chain  
 **Problem:** Flight delays cost the aviation industry billions annually and cause significant passenger dissatisfaction. Identifying the root causes (weather, carrier efficiency, traffic) in real-time is difficult due to data silos.
 **Goal:** 
@@ -10,11 +10,11 @@
 
 ---
 
-## 🏗 Architecture
+##  Architecture
 
 The pipeline is fully dockerized and orchestrated by Airflow. It separates "Hot" (Real-time) and "Cold" (Archival) storage paths.
 
-### 🛠 Tech Stack
+###  Tech Stack
 | Component | Technology | Role |
 | :--- | :--- | :--- |
 | **Ingestion** | **Kafka** (w/ Zookeeper) | Buffers high-velocity streaming data from the generator. |
@@ -26,7 +26,7 @@ The pipeline is fully dockerized and orchestrated by Airflow. It separates "Hot"
 | **Caching** | **Redis** | Caches static dimensions (Airports, Airlines) for fast joins. |
 | **Visualization** | **Streamlit / Custom API** | Front-end dashboard fetching data from Mongo/Spark. |
 
-### 🔄 Data Flow
+###  Data Flow
 1.  **Generation:** A Python producer (seeded with statistical stats from the [Kaggle Flight Dataset 2019-2023](https://www.kaggle.com/datasets/patrickzel/flight-delay-and-cancellation-dataset-2019-2023/data)) pushes JSON events to **Kafka** topics (`flights`, `weather`).
 2.  **Ingestion & Processing:** Airflow triggers a **Spark** job every 60 seconds (Micro-batch).
     *   Spark reads new offsets from Kafka.
@@ -41,7 +41,7 @@ The pipeline is fully dockerized and orchestrated by Airflow. It separates "Hot"
 
 ---
 
-## 📊 Data Dictionary & Schema
+##  Data Dictionary & Schema
 
 To satisfy the requirement for complex join-based queries, the schema is normalized.
 
@@ -71,7 +71,7 @@ To satisfy the requirement for complex join-based queries, the schema is normali
 
 ---
 
-## 📈 KPIs & Dashboard
+##  KPIs & Dashboard
 
 The dashboard visualizes the following 5 KPIs derived via Spark SQL aggregations:
 
@@ -83,7 +83,7 @@ The dashboard visualizes the following 5 KPIs derived via Spark SQL aggregations
 
 ---
 
-## 🤖 Machine Learning Model
+##  Machine Learning Model
 
 *   **Type:** Regression (Random Forest / Linear Regression).
 *   **Features:** `month`, `day_of_week`, `distance`, `carrier_code`, `origin_weather_wind`, `dep_hour`.
@@ -94,7 +94,7 @@ The dashboard visualizes the following 5 KPIs derived via Spark SQL aggregations
 
 ---
 
-## 🚀 How to Run
+##  How to Run
 
 ### Prerequisites
 *   Docker & Docker Compose (allocated min 8GB RAM).
@@ -132,7 +132,7 @@ The dashboard visualizes the following 5 KPIs derived via Spark SQL aggregations
 
 ---
 
-## 📦 Archiving Policy
+##  Archiving Policy
 *   **Threshold:** 300 MB of data in MongoDB (Hot Store).
 *   **Trigger:** Automated monitoring every 5 minutes via Airflow DAG.
 *   **Retention:** 7-day sliding window in MongoDB (configurable).
@@ -141,7 +141,7 @@ The dashboard visualizes the following 5 KPIs derived via Spark SQL aggregations
     - JSON files in HDFS `/metadata/` containing batch IDs, schema versions, timestamps, record counts
     - Hive metadata tables for SQL-based queries
 
-## 📊 Dashboard Pages
+##  Dashboard Pages
 
 The Streamlit dashboard consists of 6 comprehensive pages:
 
@@ -156,13 +156,13 @@ The Streamlit dashboard consists of 6 comprehensive pages:
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 For detailed architectural documentation, design decisions, and technical justifications, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
-## 👥 Contributors
+##  Contributors
 *   [Your Name]
 *   [Teammate Name]
 *   [Teammate Name]

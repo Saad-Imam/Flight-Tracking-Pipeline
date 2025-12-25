@@ -12,11 +12,11 @@ import requests
 import json
 
 def render(mongodb_client, redis_client):
-    st.title("⚙️ Operations & Monitoring")
+    st.title("️ Operations & Monitoring")
     st.markdown("Pipeline health, job execution status, and system monitoring")
     
     # Pipeline Health Overview
-    st.subheader("💚 Pipeline Health Overview")
+    st.subheader(" Pipeline Health Overview")
     
     health_indicators = {}
     
@@ -45,12 +45,12 @@ def render(mongodb_client, redis_client):
     for idx, (service, info) in enumerate(health_indicators.items()):
         with cols[idx]:
             if info['color'] == 'green':
-                st.success(f"✅ {service}: {info['status']}")
+                st.success(f" {service}: {info['status']}")
             else:
-                st.error(f"❌ {service}: {info['status']}")
+                st.error(f" {service}: {info['status']}")
     
     # Airflow DAG Status
-    st.subheader("🌪️ Airflow DAG Status")
+    st.subheader("️ Airflow DAG Status")
     
     st.info("Airflow UI: http://localhost:8080 (Access directly for detailed DAG status)")
     
@@ -71,7 +71,7 @@ def render(mongodb_client, redis_client):
     }
     
     for dag_name, status_info in dag_status.items():
-        with st.expander(f"📋 {dag_name}"):
+        with st.expander(f" {dag_name}"):
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric("Status", status_info['status'])
@@ -81,7 +81,7 @@ def render(mongodb_client, redis_client):
                 st.metric("Last Run", status_info['last_run'].strftime("%H:%M:%S"))
     
     # Spark Job Execution Summary
-    st.subheader("⚡ Spark Job Execution Summary")
+    st.subheader(" Spark Job Execution Summary")
     
     if mongodb_client:
         try:
@@ -131,7 +131,7 @@ def render(mongodb_client, redis_client):
             st.error(f"Error fetching Spark job data: {e}")
     
     # Archive Events
-    st.subheader("📦 Archive Events")
+    st.subheader(" Archive Events")
     
     # Archive history (placeholder - in production, query from Hive metadata)
     archive_events = [
@@ -160,7 +160,7 @@ def render(mongodb_client, redis_client):
         st.plotly_chart(fig_archive, use_container_width=True)
     
     # Cache Hit Ratios
-    st.subheader("💾 Cache Performance (Redis)")
+    st.subheader(" Cache Performance (Redis)")
     
     if redis_client:
         try:
@@ -184,7 +184,7 @@ def render(mongodb_client, redis_client):
         st.warning("Redis not connected - cache metrics unavailable")
     
     # System Resources
-    st.subheader("🖥️ System Resources")
+    st.subheader("️ System Resources")
     
     # Placeholder for system metrics
     resource_metrics = {
@@ -201,7 +201,7 @@ def render(mongodb_client, redis_client):
     st.dataframe(resource_df, use_container_width=True, hide_index=True)
     
     # Pipeline Health Score
-    st.subheader("⭐ Pipeline Health Score")
+    st.subheader(" Pipeline Health Score")
     
     # Calculate health score
     health_score = 100.0
