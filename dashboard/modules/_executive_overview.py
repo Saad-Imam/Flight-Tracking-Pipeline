@@ -677,7 +677,7 @@ def render(mongodb_client, redis_client):
         
         with col1:
             severe_delays = (df['dep_delay'] > 60).sum() if 'dep_delay' in df.columns else 0
-            st.metric("🚨 Severe Delays", severe_delays, delta=f"{severe_delays/len(df)*100:.1f}%")
+            st.metric("🚨 Severe Delays", severe_delays, delta=f"{severe_delays/len(df)*100:.1f}%", delta_color="inverse" )
         
         with col2:
             unique_airlines = df['airline_code'].nunique() if 'airline_code' in df.columns else 0
