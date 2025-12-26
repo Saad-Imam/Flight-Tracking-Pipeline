@@ -1,3 +1,5 @@
+# Triggers the Spark streaming process.
+
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from datetime import datetime, timedelta
@@ -5,8 +7,8 @@ from datetime import datetime, timedelta
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2023, 1, 1),
-    'retries': 0,
+    'start_date': datetime(2025, 10, 12),
+    'retries': 0, # since we will be starting another in 60s
 }
 
 dag = DAG(
@@ -18,7 +20,6 @@ dag = DAG(
 )
 
 # Spark Configuration
-# Networking fixes only. We do NOT need to set spark.master here anymore.
 spark_conf = {
     "spark.driver.host": "airflow-scheduler", 
     "spark.driver.bindAddress": "0.0.0.0",
@@ -28,7 +29,7 @@ spark_conf = {
 
 spark_job = SparkSubmitOperator(
     task_id='process_flight_data',
-    # We use the connection we defined in docker-compose
+    # connection we defined in docker-compose
     conn_id='spark_default', 
     
     application='/opt/airflow/dags/spark_processor.py',

@@ -1,7 +1,6 @@
-"""
-Comprehensive Spark Processor for Flight Tracking Pipeline
-Handles: Kafka ingestion, ML inference, MongoDB writes, HDFS archival, Hive Data Warehouse
-"""
+# Comprehensive Spark Processor for Flight Tracking Pipeline
+# Handles: Kafka ingestion, ML inference, MongoDB writes, HDFS archival, Hive Data Warehouse
+
 import json
 import pickle
 import os
@@ -224,7 +223,7 @@ def process_and_enrich_data(df, spark):
         col("processing_timestamp").cast("date")
     )
     
-    # Generate flight_id (always generate since it doesn't exist in source)
+    # Generate flight_id 
     df_enriched = df_enriched.withColumn(
         "flight_id",
         concat(
@@ -316,7 +315,6 @@ def run_spark_job():
     
     if ml_model is not None:
         # Use ML model for predictions
-        # Note: In a distributed Spark environment, model inference should be done via UDF or Spark ML
         # For now, we use a simplified approach - in production, use broadcast variables and UDFs
         def predict_with_model(row):
             try:

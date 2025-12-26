@@ -1,8 +1,6 @@
-# Removed version - it's obsolete in newer docker-compose
-
 services:
   
-  # 1. Zookeeper (Required for Kafka)
+  # Zookeeper (Required for Kafka)
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: zookeeper
@@ -14,7 +12,7 @@ services:
     networks:
       - bigdata-network
 
-  # 2. Kafka 
+  # Kafka 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
@@ -38,7 +36,7 @@ services:
       retries: 10
       start_period: 30s
 
-  # 3. Kafka UI 
+  # Kafka UI 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
@@ -53,7 +51,7 @@ services:
     networks:
       - bigdata-network
 
-  # 4. Flight Producer 
+  # Flight Producer 
   flight-producer:
     build: ./producer
     container_name: flight-producer
@@ -64,7 +62,7 @@ services:
     networks:
       - bigdata-network
 
-  # 5. Spark Master (Official Apache Image)
+  # Spark Master (Official Apache Image, others were troublesome)
   spark-master:
     image: apache/spark:3.5.1
     container_name: spark-master
@@ -79,13 +77,13 @@ services:
     networks:
       - bigdata-network
   
-  # 6. Spark Worker (Official Apache Image)
+  # Spark Worker 
   spark-worker:
     image: apache/spark:3.5.1
     container_name: spark-worker
     depends_on:
       - spark-master
-    # We explicitly tell the worker where the master is via command arguments
+    # explicitly tell the worker where the master is via command arguments
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     environment:
       - SPARK_NO_DAEMONIZE=true
@@ -94,7 +92,7 @@ services:
     networks:
       - bigdata-network
   
-  # 7. Airflow Init
+  # Airflow Init
   airflow-init:
     build: ./airflow
     container_name: airflow-init
@@ -108,7 +106,7 @@ services:
     networks:
       - bigdata-network
 
-  # 8. Airflow Webserver
+  # Airflow Webserver
   airflow-webserver:
     build: ./airflow
     container_name: airflow-webserver
@@ -130,7 +128,7 @@ services:
       - bigdata-network
     command: webserver
 
-  # 9. Airflow Scheduler
+  # Airflow Scheduler
   airflow-scheduler:
     build: ./airflow
     container_name: airflow-scheduler
@@ -150,7 +148,7 @@ services:
       - bigdata-network
     command: scheduler
 
-  # 10. Postgres
+  # Postgres
   postgres:
     image: postgres:13
     container_name: postgres
@@ -166,7 +164,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 11. MongoDB (Operational Data Store)
+  # MongoDB (Operational Data Store)
   mongodb:
     image: mongo:6.0
     container_name: mongodb
@@ -184,7 +182,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 12. Redis (Caching Layer)
+  # Redis (Caching Layer)
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -198,7 +196,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 13. HDFS Namenode
+  # HDFS Namenode
   hdfs-namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: hdfs-namenode
@@ -217,7 +215,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # 14. HDFS Datanode
+  # HDFS Datanode
   hdfs-datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: hdfs-datanode
@@ -232,7 +230,7 @@ services:
     networks:
       - bigdata-network
 
-  # 15. Hive Metastore (PostgreSQL backend)
+  # Hive Metastore (PostgreSQL backend)
   postgres-hive:
     image: postgres:13
     container_name: postgres-hive
@@ -250,7 +248,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 16. Hive Metastore Service
+  # Hive Metastore Service
   hive-metastore:
     image: apache/hive:3.1.3
     container_name: hive-metastore
@@ -286,7 +284,7 @@ services:
         echo "Starting Hive Metastore..."
         exec /opt/hive/bin/hive --service metastore
 
-  # 17. Streamlit Dashboard
+  # Streamlit Dashboard
   streamlit-dashboard:
     build: ./dashboard
     container_name: streamlit-dashboard

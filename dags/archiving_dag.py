@@ -1,6 +1,5 @@
-"""
-Archiving DAG: Monitors MongoDB size and archives old data to HDFS when > 300 MB
-"""
+# Archiving DAG: Monitors MongoDB size and archives old data to HDFS when > 300 MB
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
@@ -70,21 +69,21 @@ dag = DAG(
     tags=['archiving', 'mongodb', 'hdfs']
 )
 
-# Task 1: Check MongoDB size
+# Check MongoDB size
 check_size_task = PythonOperator(
     task_id='check_mongodb_size',
     python_callable=check_mongodb_size,
     dag=dag
 )
 
-# Task 2: Decision task
+# Decision task
 archive_decision_task = PythonOperator(
     task_id='archive_decision',
     python_callable=archive_old_data,
     dag=dag
 )
 
-# Task 3: Spark job to archive data
+# Spark job to archive data
 spark_conf = {
     "spark.driver.host": "airflow-scheduler",
     "spark.driver.bindAddress": "0.0.0.0",

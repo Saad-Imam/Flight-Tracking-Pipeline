@@ -1,6 +1,5 @@
-"""
-Spark job to archive old data from MongoDB to HDFS
-"""
+# Spark job to archive old data from MongoDB to HDFS
+
 import json
 from datetime import datetime, timedelta
 from pyspark.sql import SparkSession

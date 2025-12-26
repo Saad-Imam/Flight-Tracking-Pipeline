@@ -1,170 +1,123 @@
-**A Big Data Architecture Project for Real-Time Ingestion, Processing, Storage, and Predictive Analytics of Flight Data.**
+This re-formatted README incorporates the specific schema from your project table (including the detailed delay breakdown columns) and removes the requested branding and contributor sections.
+
+***
+
+# Big Data Architecture: Real-Time Flight Analytics & Predictive Pipeline
+
+**A comprehensive data engineering project for real-time ingestion, processing, storage, and predictive analytics of aviation data.**
 
 ---
-###  Business Problem
-**Domain:** Aviation & Supply Chain  
-**Problem:** Flight delays cost the aviation industry billions annually and cause significant passenger dissatisfaction. Identifying the root causes (weather, carrier efficiency, traffic) in real-time is difficult due to data silos.
-**Goal:** 
-1. Provide Managers with a **Live Dashboard** of flight operations and delays.
-2. Provide a **Predictive Model** that estimates delay duration for upcoming flights to allow for proactive resource allocation.
+
+### Business Problem
+*   **Domain:** Aviation & Logistics
+*   **Problem:** Flight delays cost the aviation industry billions annually. Identifying root causes (weather, carrier, or system congestion) in real-time is difficult due to the high velocity of incoming flight events.
+*   **Goal:** 
+    1. Provide a **Live Executive Dashboard** for monitoring flight operations and delay causes.
+    2. Implement a **Predictive Model** that estimates arrival delays to allow for proactive resource allocation.
+    3. Maintain a dual-tier storage system (**Hot/Cold**) for both operational speed and historical depth.
 
 ---
 
-##  Architecture
+### Architecture
 
-The pipeline is fully dockerized and orchestrated by Airflow. It separates "Hot" (Real-time) and "Cold" (Archival) storage paths.
+The pipeline is fully dockerized and orchestrated by Airflow, following a Lambda-style architecture to separate real-time "Hot" processing from archival "Cold" storage.
+![System Architecture Diagram](docs/architecture.png)
 
-###  Tech Stack
+#### **Tech Stack**
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Ingestion** | **Kafka** (w/ Zookeeper) | Buffers high-velocity streaming data from the generator. |
-| **Orchestration** | **Apache Airflow** | Schedules micro-batches, model training, and archival jobs. |
-| **Processing** | **Apache Spark** (PySpark) | Performs ETL, Joins, Aggregations, and ML Inference. |
-| **Hot Storage** | **MongoDB** | Stores processed, recent flight data for the dashboard API. |
-| **Cold Storage** | **HDFS** (Hadoop) | Long-term archival of raw data (Parquet format). |
-| **Metadata** | **Hive Metastore** | Manages schema definitions for analytical querying. |
-| **Caching** | **Redis** | Caches static dimensions (Airports, Airlines) for fast joins. |
-| **Visualization** | **Streamlit / Custom API** | Front-end dashboard fetching data from Mongo/Spark. |
-
-###  Data Flow
-1.  **Generation:** A Python producer (seeded with statistical stats from the [Kaggle Flight Dataset 2019-2023](https://www.kaggle.com/datasets/patrickzel/flight-delay-and-cancellation-dataset-2019-2023/data)) pushes JSON events to **Kafka** topics (`flights`, `weather`).
-2.  **Ingestion & Processing:** Airflow triggers a **Spark** job every 60 seconds (Micro-batch).
-    *   Spark reads new offsets from Kafka.
-    *   Fetches static dimensions (Airline names, Airport cities) from **Redis**.
-    *   Joins Flight Stream + Weather Stream + Dimensions.
-    *   Runs the **ML Regressor** to predict `delay_minutes`.
-3.  **Storage:**
-    *   **Hot:** Enriched data with predictions is upserted into **MongoDB**.
-    *   **Cold:** Raw batch data is appended to **HDFS** in Parquet format.
-4.  **Archival:** A separate Airflow DAG monitors MongoDB size. If >300MB, old records are moved to HDFS and purged from Mongo.
-5.  **Visualization:** The Dashboard polls MongoDB every minute to update charts.
+| **Ingestion** | **Kafka** (w/ Zookeeper) | Buffers high-velocity streaming data from the flight generator. |
+| **Orchestration** | **Apache Airflow** | Schedules micro-batches, model training, and data archival jobs. |
+| **Processing** | **Apache Spark** (PySpark) | Handles ETL, stream-to-static joins, and ML inference. |
+| **Hot Storage** | **MongoDB** | Serves as the real-time sink for the dashboard API. |
+| **Cold Storage** | **HDFS** (Hadoop) | Long-term archival of raw and enriched data in Parquet format. |
+| **Metadata** | **Hive Metastore** | Manages table definitions for analytical SQL querying. |
+| **Caching** | **Redis** | Caches static dimension data (Airports, Airlines) for sub-millisecond joins. |
+| **Visualization** | **Streamlit** | Multi-page frontend for monitoring KPIs and ML performance. |
 
 ---
 
-##  Data Dictionary & Schema
+### Data Dictionary & Schema
 
-To satisfy the requirement for complex join-based queries, the schema is normalized.
+The following schema defines the core **Flight Events Stream** processed through the pipeline.
 
-### 1. Fact Table (Streaming)
-**Source:** Kafka Topic `flight_events`  
-**Description:** Generated in real-time based on statistical probabilities.
-
-| Column | Type | Description |
+#### **Main Flight Event Schema**
+| Column Name | Data Type | Description |
 | :--- | :--- | :--- |
-| `flight_id` | UUID | Unique identifier. |
-| `timestamp` | Timestamp | Event generation time. |
-| `carrier_code` | String (FK) | Join Key for Airlines. |
-| `tail_num` | String (FK) | Join Key for Aircraft. |
-| `origin_airport_id` | Int (FK) | Join Key for Airports. |
-| `dest_airport_id` | Int (FK) | Join Key for Airports. |
-| `dep_delay` | Float | Actual departure delay (Target Variable). |
-| `taxi_out` | Float | Minutes spent taxiing. |
-| `distance` | Float | Flight distance. |
+| `flight_id` | String | Unique identifier for each flight event (generated). |
+| `timestamp` | Timestamp | Event generation timestamp (ISO 8601 format). |
+| `AIRLINE_CODE` | String | IATA airline code (e.g., 'AA', 'DL'). |
+| `ORIGIN` | String | IATA origin airport code (e.g., 'ATL'). |
+| `DEST` | String | IATA destination airport code (e.g., 'LAX'). |
+| `CRS_DEP_TIME` | Integer | Scheduled departure time (0-2400 format). |
+| `DEP_DELAY` | Double | Departure delay in minutes (negative = early). |
+| `ARR_DELAY` | Double | Arrival delay in minutes. |
+| `DISTANCE` | Double | Flight distance in miles. |
+| `DELAY_DUE_WEATHER` | Double | Delay attributed to weather (minutes). |
+| `DELAY_DUE_CARRIER` | Double | Delay attributed to carrier operations. |
+| `DELAY_DUE_NAS` | Double | Delay attributed to National Airspace System. |
+| `DELAY_DUE_LATE_AIRCRAFT` | Double | Delay due to late-arriving aircraft. |
+| `Month` | Integer | Month of flight (1-12). |
+| `DayOfWeek` | Integer | Day of week (0=Monday, 6=Sunday). |
 
-### 2. Dimension Tables (Static/Cached in Redis)
-**Source:** Pre-loaded from CSVs to Postgres/Redis.
+---![System Architecture Diagram](docs/architecture.png)
 
-*   **Dim_Airlines:** `carrier_code`, `airline_name`, `country`, `fleet_size`.
-*   **Dim_Airports:** `airport_id`, `city`, `state`, `latitude`, `longitude`.
-*   **Dim_Aircraft:** `tail_num`, `manufacturer`, `model`, `engine_type`, `year_built`.
-*   **Dim_Weather:** (Streamed & Joined) `airport_id`, `timestamp`, `temperature`, `visibility`, `wind_speed`.
-
----
-
-##  KPIs & Dashboard
-
-The dashboard visualizes the following 5 KPIs derived via Spark SQL aggregations:
-
-1.  **Average Delay Minutes:** (Grouped by Airline & Airport).
-2.  **On-Time Performance (OTP) %:** Percentage of flights with `<15 min` delay.
-3.  **Predicted vs. Actual Delay:** Accuracy metric for the ML model.
-4.  **Weather Impact Score:** Correlation between `wind_speed` and `dep_delay`.
-5.  **Total Flight Volume:** Rolling count of active flights per hour.
-
----
-
-##  Machine Learning Model
-
-*   **Type:** Regression (Random Forest / Linear Regression).
-*   **Features:** `month`, `day_of_week`, `distance`, `carrier_code`, `origin_weather_wind`, `dep_hour`.
-*   **Target:** `arrival_delay` (minutes).
-*   **Pipeline:**
-    *   **Training:** Batch job runs daily on HDFS historical data to retrain the model.
-    *   **Inference:** Real-time Spark job loads the model and predicts delays for incoming Kafka messages.
+### Data Flow
+1.  **Generation:** A Python producer simulates flight events based on statistical distributions from historical data, pushing JSON to **Kafka** topics.
+2.  **Ingestion & Processing:** Airflow triggers a **Spark Streaming** job:
+    *   Reads new offsets from Kafka.
+    *   Enriches events by joining the stream with static data (Airline/Airport names) stored in **Redis**.
+    *   Performs real-time aggregations (e.g., average delay per carrier).
+3.  **Predictive Analytics:** The Spark job passes incoming features (`Month`, `DayOfWeek`, `DISTANCE`, `DEP_DELAY`) into a **pre-trained ML model** to predict the `ARR_DELAY`.
+4.  **Storage:** 
+    *   **Hot Store:** Enriched data + predictions are written to **MongoDB**.
+    *   **Cold Store:** Raw events are archived to **HDFS** in compressed Parquet.
+5.  **Archival & Purging:** An Airflow DAG monitors the MongoDB size. Once a 300MB threshold is reached, historical records are offloaded to HDFS and purged from the hot store.
 
 ---
 
-##  How to Run
+### Dashboard & KPIs
 
-### Prerequisites
-*   Docker & Docker Compose (allocated min 8GB RAM).
+The Streamlit dashboard provides 6 distinct views into the data:
+1.  **Real-Time Overview:** Live counts of incoming flights and system latency.
+2.  **Streaming Analytics:** Rolling window analysis of delays by `AIRLINE_CODE`.
+3.  **Historical Analytics:** OLAP drill-downs into long-term delay trends.
+4.  **Prediction & Insights:** Analysis of predicted vs. actual arrival delays.
+5.  **Data Quality & Metadata:** Monitoring of missing values and Hive schema health.
+6.  **Operations & Monitoring:** Visualization of Airflow DAG statuses and Spark job resource usage.
+
+---
+
+### Machine Learning Model
+*   **Target:** `ARR_DELAY` (Arrival Delay in minutes).
+*   **Features:** `Month`, `DayOfWeek`, `CRS_DEP_TIME`, `DISTANCE`, `DEP_DELAY`.
+*   **Implementation:** A Random Forest Regressor trained on historical HDFS data. The model is persisted and loaded by the Spark Streaming job for real-time inference.
+
+---
+
+### How to Run
+
+#### **Prerequisites**
+*   Docker & Docker Compose (allocated min 4 GB RAM).
 *   Python 3.8+
 
-### Steps
-1.  **Clone the Repo:**
+#### **Setup**
+1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/your-username/skystream.git
-    cd skystream
+    git clone https://github.com/Saad-Imam/Flight-Tracking-Pipeline.git
+    cd Flight-Tracking-Pipeline
     ```
 
-2.  **Start Services:**
+2.  **Launch Environment:**
     ```bash
     docker-compose up -d --build
     ```
-    *This spins up: Zookeeper, Kafka, Spark Master/Workers, MongoDB, Airflow, Redis, HDFS Namenode/Datanode.*
+    This automatically starts the entire pipeline. No manual modification required!
 
-3.  **Initialize Metadata:**
-    ```bash
-    # Run the script to load static dimensions into Redis
-    python scripts/init_dimensions.py
-    ```
-
-4.  **Start the Generator:**
-    ```bash
-    # Starts generating synthetic flight data to Kafka
-    python producer/generator.py
-    ```
-
-5.  **Access Interfaces:**
-    *   **Airflow UI:** `http://localhost:8080` (Trigger the `flight_processing_dag`)
-    *   **Spark Master:** `http://localhost:8081`
+3.  **Access Web UIs:**
+    *   **Airflow:** `http://localhost:8080`
     *   **Dashboard:** `http://localhost:8501`
+    *   **Spark Master:** `http://localhost:8081`
 
 ---
 
-##  Archiving Policy
-*   **Threshold:** 300 MB of data in MongoDB (Hot Store).
-*   **Trigger:** Automated monitoring every 5 minutes via Airflow DAG.
-*   **Retention:** 7-day sliding window in MongoDB (configurable).
-*   **Format:** Parquet (Snappy Compression) on HDFS.
-*   **Metadata:** 
-    - JSON files in HDFS `/metadata/` containing batch IDs, schema versions, timestamps, record counts
-    - Hive metadata tables for SQL-based queries
-
-##  Dashboard Pages
-
-The Streamlit dashboard consists of 6 comprehensive pages:
-
-1. **Real-Time Overview**: Live KPIs, data ingestion rates, MongoDB size, system latency
-2. **Streaming Analytics**: Time-series charts, rolling aggregates, window-based metrics, trend analysis
-3. **Historical Analytics**: Daily/hourly aggregations, day-of-week analysis, OLAP drill-downs
-4. **Prediction & Insights**: ML predictions, actual vs predicted comparisons, anomaly detection, confidence analysis
-5. **Data Quality & Metadata**: Schema information, missing values, data freshness, archive metadata, quality scores
-6. **Operations & Monitoring**: Airflow DAG status, Spark job execution, archive events, cache performance, pipeline health
-
-**Auto-refresh**: Dashboard automatically refreshes every 60 seconds.
-
----
-
-##  Documentation
-
-For detailed architectural documentation, design decisions, and technical justifications, see [ARCHITECTURE.md](ARCHITECTURE.md).
-
----
-
-##  Contributors
-*   [Your Name]
-*   [Teammate Name]
-*   [Teammate Name]
-
-*Big Data Architecture Course Final Project.*

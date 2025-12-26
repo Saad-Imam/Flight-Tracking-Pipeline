@@ -1,6 +1,5 @@
-"""
-Initialize Hive metadata tables for schema, timestamps, record counts, archive IDs, storage locations
-"""
+# Initialize Hive metadata tables for schema, timestamps, record counts, archive IDs, storage locations
+
 from pyspark.sql import SparkSession
 
 def init_metadata_tables():
