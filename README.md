@@ -56,8 +56,6 @@ The following schema defines the core **Flight Events Stream** processed through
 | `Month` | Integer | Month of flight (1-12). |
 | `DayOfWeek` | Integer | Day of week (0=Monday, 6=Sunday). |
 
----![System Architecture Diagram](docs/architecture.png)
-
 ### Data Flow
 1.  **Generation:** A Python producer simulates flight events based on statistical distributions from historical data, pushing JSON to **Kafka** topics.
 2.  **Ingestion & Processing:** Airflow triggers a **Spark Streaming** job:
