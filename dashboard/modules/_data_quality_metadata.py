@@ -9,6 +9,69 @@ from datetime import datetime, timedelta
 import pymongo
 import json
 import numpy as np
+import os
+
+def get_hive_metadata():
+    """Connect to Hive metastore PostgreSQL backend and get archive metadata"""
+    try:
+        import psycopg2
+        
+        hive_host = os.getenv("HIVE_HOST", "postgres-hive")
+        conn = psycopg2.connect(
+            host=hive_host,
+            port=5432,
+            database="metastore",
+            user="hive",
+            password="hive",
+            connect_timeout=5
+        )
+        cursor = conn.cursor()
+        
+        # Get total number of tables (archives)
+        cursor.execute("SELECT COUNT(*) FROM \"TBLS\"")
+        total_archives = cursor.fetchone()[0]
+        
+        # Get table parameters for size info
+        cursor.execute("""
+            SELECT COALESCE(SUM(CAST(p.\"PARAM_VALUE\" AS BIGINT)), 0) 
+            FROM \"TABLE_PARAMS\" p 
+            WHERE p.\"PARAM_KEY\" IN ('totalSize', 'rawDataSize')
+        """)
+        total_size_bytes = cursor.fetchone()[0] or 0
+        total_size_mb = total_size_bytes / (1024 * 1024)
+        
+        # Get total record count from table params
+        cursor.execute("""
+            SELECT COALESCE(SUM(CAST(p.\"PARAM_VALUE\" AS BIGINT)), 0)
+            FROM \"TABLE_PARAMS\" p 
+            WHERE p.\"PARAM_KEY\" = 'numRows'
+        """)
+        total_records = cursor.fetchone()[0] or 0
+        
+        # Get latest partition/table creation time
+        cursor.execute("""
+            SELECT MAX(t.\"CREATE_TIME\") 
+            FROM \"TBLS\" t
+        """)
+        latest_create_time = cursor.fetchone()[0]
+        if latest_create_time:
+            latest_date = datetime.fromtimestamp(latest_create_time).strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            latest_date = "No tables found"
+        
+        cursor.close()
+        conn.close()
+        
+        return {
+            "total_archives": str(total_archives),
+            "total_archived_records": f"{total_records:,}",
+            "total_archive_size_mb": f"{total_size_mb:.2f} MB",
+            "latest_archive_date": latest_date
+        }
+    except ImportError:
+        return None
+    except Exception as e:
+        return {"error": str(e)}
 
 def render(mongodb_client, redis_client):
     st.title(" Data Quality & Metadata")
@@ -110,16 +173,28 @@ def render(mongodb_client, redis_client):
         # Archive Metadata
         st.subheader(" Archive Metadata")
         
-        # Try to get archive information from Hive or display placeholder
-        st.info("Archive metadata is stored in Hive Data Warehouse. Connect to Hive to view detailed archive information.")
+        # Try to get archive information from Hive
+        hive_metadata = get_hive_metadata()
         
-        # Placeholder for archive metadata
-        archive_metadata = {
-            "total_archives": "N/A (Connect to Hive)",
-            "total_archived_records": "N/A",
-            "total_archive_size_mb": "N/A",
-            "latest_archive_date": "N/A"
-        }
+        if hive_metadata is None:
+            st.warning("⚠️ psycopg2 library not available. Install it to connect to Hive metastore.")
+            archive_metadata = {
+                "total_archives": "N/A (psycopg2 required)",
+                "total_archived_records": "N/A",
+                "total_archive_size_mb": "N/A",
+                "latest_archive_date": "N/A"
+            }
+        elif "error" in hive_metadata:
+            st.warning(f"⚠️ Could not connect to Hive metastore: {hive_metadata['error']}")
+            archive_metadata = {
+                "total_archives": "N/A (Connection error)",
+                "total_archived_records": "N/A",
+                "total_archive_size_mb": "N/A",
+                "latest_archive_date": "N/A"
+            }
+        else:
+            st.success("✅ Connected to Hive metastore successfully")
+            archive_metadata = hive_metadata
         
         archive_df = pd.DataFrame([
             {"Metric": k.replace("_", " ").title(), "Value": v} 

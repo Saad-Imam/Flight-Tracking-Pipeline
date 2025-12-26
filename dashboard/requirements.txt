@@ -8,3 +8,4 @@ pyhive>=0.7.0
 thrift-sasl>=0.4.3
 pyspark[hive]>=3.5.0
 statsmodels>=0.14.0
+psycopg2-binary>=2.9.0
