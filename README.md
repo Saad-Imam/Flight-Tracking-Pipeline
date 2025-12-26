@@ -1,7 +1,3 @@
-This re-formatted README incorporates the specific schema from your project table (including the detailed delay breakdown columns) and removes the requested branding and contributor sections.
-
-***
-
 # Big Data Architecture: Real-Time Flight Analytics & Predictive Pipeline
 
 **A comprehensive data engineering project for real-time ingestion, processing, storage, and predictive analytics of aviation data.**
